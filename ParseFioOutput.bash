@@ -1,4 +1,5 @@
 #!/bin/bash
+# set -x
 ## used to parse out the IOPS and bandwidth of the file.
 if [ $# -ne 1 ]; then
                     echo $0: "Filename needed"
@@ -7,6 +8,19 @@ fi
 File2Check=$1
 echo ""
 echo $File2Check
+## Extract the hdparm info
+##
+HdparmInfo () {
+        grep -A 4 'hdparm' ${File2Check} > TMPFile.del
+        awk '{
+        if ( $1 == "MSG" )
+                print "-->" $(NF-3), $(NF-2), $(NF-1), $(NF);
+                else if ( $2 == "cached" )
+                        print "-->" $(NF-1), $NF;
+                else if ( $2 == "buffered" )
+                        print "-->" $(NF-1), $NF;
+                }' TMPFile.del
+        }
 ## Extract the Random Writes
 ##
 RandRead () {
@@ -34,9 +48,12 @@ RandRead () {
 
 echo ""
 echo ""
+HdparmInfo
+rm TMPFile.del &> /dev/null
+echo ""
 8020Read
-rm TMPFile.del
+rm TMPFile.del &> /dev/null
 echo ""
 RandRead
-rm TMPFile.del
+rm TMPFile.del &> /dev/null
 echo ""
